@@ -1,0 +1,827 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Academia DS — Protótipo do sistema</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#E6EAF1; --card:#FFFFFF; --ink:#0E1A3B; --muted:#5B6787; --line:#DDE2EC;
+    --soft:#F2F4F8; --accent:#FFC20E; --display:'Big Shoulders Display',Impact,'Arial Narrow',sans-serif; --ok:#2B8A3E; --okbg:#E6F4EA;
+    --warn:#B35C00; --warnbg:#FFF1DE; --bad:#C92A2A; --badbg:#FDE8E8; --wa:#1FA855;
+    --r:14px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 Archivo,system-ui,-apple-system,Segoe UI,sans-serif;-webkit-font-smoothing:antialiased}
+  button,input,select,textarea{font:inherit;color:inherit}
+  button{cursor:pointer}
+  [hidden]{display:none!important}
+
+  /* moldura */
+  .proto{display:flex;flex-direction:column;align-items:center;padding:16px 16px 40px;gap:12px}
+  .proto-bar{width:100%;max-width:430px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+  .proto-tag{font-size:12px;color:var(--muted);letter-spacing:.02em}
+  .proto-tag b{color:var(--ink)}
+  .switch{display:flex;background:#DDDBD6;border-radius:999px;padding:3px}
+  .switch button{border:0;background:transparent;padding:7px 14px;border-radius:999px;font-weight:600;font-size:13px;color:var(--muted)}
+  .switch button.on{background:var(--ink);color:#fff}
+  .phone{position:relative;width:100%;max-width:430px;height:min(860px,calc(100vh - 90px));min-height:600px;background:var(--soft);border-radius:28px;overflow:hidden;box-shadow:0 1px 0 rgba(0,0,0,.04),0 20px 50px -20px rgba(0,0,0,.35);display:flex;flex-direction:column}
+  @media (max-width:480px){.proto{padding:8px 0 0}.proto-bar{padding:0 12px}.phone{border-radius:0;height:calc(100vh - 52px)}}
+  main{flex:1;overflow-y:auto;padding:20px 16px 24px}
+
+  /* nav inferior */
+  nav{display:flex;justify-content:space-around;align-items:center;background:var(--card);border-top:1px solid var(--line);padding:8px 6px 10px}
+  nav button{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:600;color:var(--muted);padding:4px 8px;min-width:58px}
+  nav button svg{width:22px;height:22px}
+  nav button.on{color:var(--ink)}
+  nav .plus{width:48px;height:48px;border-radius:50%;background:var(--accent);color:var(--ink);display:grid;place-items:center;min-width:0;padding:0;margin-top:-18px;box-shadow:0 6px 16px -6px rgba(0,0,0,.5)}
+  nav .plus svg{width:24px;height:24px}
+
+  /* tipografia */
+  h1{font-family:var(--display);font-size:32px;line-height:1;margin:0 0 4px;font-weight:800;text-transform:uppercase;letter-spacing:.005em;text-wrap:balance}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:24px 0 10px;font-weight:700}
+  .sub{color:var(--muted);font-size:13px}
+  .row-between{display:flex;align-items:center;justify-content:space-between;gap:10px}
+
+  /* componentes */
+  .card{background:var(--card);border-radius:var(--r);padding:14px;border:1px solid var(--line)}
+  .stack>*+*{margin-top:8px}
+  .search{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:0 12px;margin-top:14px}
+  .search input{border:0;outline:0;background:transparent;padding:12px 0;width:100%;font-size:16px}
+  .search svg{width:18px;height:18px;color:var(--muted);flex:none}
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
+  .stat .n{font-family:var(--display);font-size:34px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+  .stat .l{font-size:12px;color:var(--muted);font-weight:500}
+  .stat.dark{background:var(--accent);color:var(--ink);border-color:var(--accent)}
+  .stat.dark .l{color:#3B3000}
+  .stat.bad .n{color:var(--bad)} .stat.warn .n{color:var(--warn)}
+
+  .item{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px}
+  .item .who{flex:1;min-width:0;cursor:pointer}
+  .item .name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .avatar{width:38px;height:38px;border-radius:50%;background:#E6EAF1;display:grid;place-items:center;font-weight:700;font-size:13px;flex:none;color:var(--ink)}
+  .badge{display:inline-block;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:999px}
+  .b-ok{background:var(--okbg);color:var(--ok)} .b-warn{background:var(--warnbg);color:var(--warn)} .b-bad{background:var(--badbg);color:var(--bad)}
+  .icon-btn{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--card);display:grid;place-items:center;flex:none}
+  .icon-btn svg{width:19px;height:19px}
+  .icon-btn.wa{background:var(--wa);border-color:var(--wa);color:#fff}
+  .icon-btn.ok{background:var(--ink);border-color:var(--ink);color:#fff}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--ink);background:var(--ink);color:#fff;font-weight:600;padding:12px 16px;border-radius:12px;width:100%}
+  .btn.ghost{background:var(--card);color:var(--ink);border-color:var(--line)}
+  .btn.wa{background:var(--wa);border-color:var(--wa)}
+  .btn.lime{background:var(--accent);border-color:var(--accent);color:var(--ink)}
+  .btn svg{width:18px;height:18px}
+  .btns{display:flex;gap:8px;flex-wrap:wrap}
+  .btns .btn{flex:1;min-width:120px}
+
+  .chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;margin-top:12px}
+  .chip{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;white-space:nowrap;color:var(--muted)}
+  .chip.on{background:var(--ink);border-color:var(--ink);color:#fff}
+
+  .back{border:0;background:none;padding:0;display:inline-flex;align-items:center;gap:4px;color:var(--muted);font-weight:600;font-size:14px;margin-bottom:10px}
+  .back svg{width:18px;height:18px}
+
+  .tabs{display:flex;border-bottom:1px solid var(--line);margin:18px -16px 14px;padding:0 16px;gap:18px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
+  .tabs button{border:0;background:none;padding:10px 0;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+  .tabs button.on{color:var(--ink);border-color:var(--ink)}
+
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:10px 16px;font-size:14px}
+  .kv dt{color:var(--muted)} .kv dd{margin:0;text-align:right;font-weight:500}
+
+  .ex{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;gap:10px;align-items:center}
+  .ex .n{font-weight:600}
+  .ex .m{font-size:13px;color:var(--muted)}
+  .ex .grow{flex:1;min-width:0}
+  .kg{display:flex;align-items:center;gap:4px;font-size:13px;color:var(--muted)}
+  .kg input{width:58px;border:1px solid var(--line);border-radius:8px;padding:6px 6px;text-align:right;font-weight:600;color:var(--ink);background:var(--soft)}
+  .ex-edit{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px 12px}
+  .ex-edit .n{font-weight:600}
+  .ex-campos{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px}
+  .ex-campos span{display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:3px;white-space:nowrap}
+  .ex-campos input,.ex-obs{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 6px;font-weight:600;background:var(--soft);font-size:15px;text-align:center;outline:0}
+  .ex-obs{text-align:left;font-weight:400;font-size:13.5px;margin-top:6px;padding:8px 10px}
+  .ex-campos input:focus,.ex-obs:focus{border-color:var(--ink);background:#fff}
+  .x{border:0;background:none;color:#AAA;font-size:20px;line-height:1;padding:4px}
+  .check{width:26px;height:26px;border-radius:8px;border:2px solid #CFCDC8;background:#fff;display:grid;place-items:center;flex:none;padding:0}
+  .check.on{background:var(--ok);border-color:var(--ok);color:#fff}
+  .check svg{width:16px;height:16px}
+  .ex.done .n{text-decoration:line-through;color:var(--muted)}
+
+  .field{display:block;margin-bottom:12px}
+  .field span{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin-bottom:5px}
+  .field input,.field select,.field textarea{width:100%;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:11px 12px;font-size:16px;outline:0}
+  .field textarea{min-height:96px;resize:vertical}
+  .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--ink)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+
+  .pix{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;word-break:break-all;background:var(--soft);border:1px dashed #CFCDC8;border-radius:10px;padding:10px;color:#444}
+  .msg{display:block;width:100%;background:#DCF8C6;border:2px solid transparent;border-radius:12px 12px 4px 12px;padding:10px 12px;font-size:15px;line-height:1.45;white-space:pre-wrap;word-break:break-word;resize:vertical;outline:0;min-height:220px}
+  .msg:focus{border-color:var(--wa);background:#E7FBD7}
+
+  .hero{background:var(--ink);color:#fff;border-radius:18px;padding:16px;margin-top:14px}
+  .hero .k{font-size:12px;color:#8F9BBA;text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+  .hero .t{font-family:var(--display);font-size:28px;font-weight:800;line-height:1;text-transform:uppercase;margin:4px 0 12px}
+  .notice{display:flex;gap:10px;background:var(--accent);color:var(--ink);border-radius:var(--r);padding:12px 14px;margin-top:14px;font-size:14px}
+  .notice svg{width:20px;height:20px;flex:none;margin-top:1px}
+
+  .note{font-size:12px;color:var(--muted);background:var(--card);border:1px dashed #CFCDC8;border-radius:10px;padding:10px 12px;margin-top:12px}
+
+  /* sheet */
+  .scrim{position:absolute;inset:0;background:rgba(0,0,0,.35);z-index:20;display:flex;align-items:flex-end}
+  .sheet{background:var(--soft);width:100%;max-height:88%;overflow-y:auto;border-radius:22px 22px 0 0;padding:10px 16px 22px;animation:up .2s ease-out}
+  .sheet .grab{width:40px;height:4px;border-radius:4px;background:#CFCDC8;margin:0 auto 12px}
+  .sheet h3{margin:0 0 12px;font-size:18px}
+  @keyframes up{from{transform:translateY(30px);opacity:.5}to{transform:none;opacity:1}}
+
+  .toast{position:absolute;left:50%;bottom:86px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:999px;font-size:13.5px;font-weight:600;z-index:30;white-space:nowrap;max-width:92%;overflow:hidden;text-overflow:ellipsis}
+  .push{position:absolute;top:10px;left:10px;right:10px;background:rgba(255,255,255,.97);border-radius:16px;padding:12px 14px;z-index:25;box-shadow:0 10px 30px -8px rgba(0,0,0,.35);display:flex;gap:10px;animation:down .3s ease-out}
+  .push .ic{width:34px;height:34px;border-radius:8px;background:var(--ink);color:var(--accent);display:grid;place-items:center;font-weight:800;font-size:13px;flex:none}
+  .push b{font-size:13px} .push p{margin:1px 0 0;font-size:13.5px}
+  @keyframes down{from{transform:translateY(-30px);opacity:0}to{transform:none;opacity:1}}
+
+  .chart{width:100%;height:auto;display:block}
+  table.hist{width:100%;border-collapse:collapse;font-size:13px}
+  table.hist th{text-align:left;color:var(--muted);font-weight:600;padding:6px 4px;border-bottom:1px solid var(--line)}
+  table.hist td{padding:8px 4px;border-bottom:1px solid var(--line)}
+  .delta{font-size:12px;font-weight:700}
+  .delta.down{color:var(--ok)} .delta.up{color:var(--bad)}
+  .qr{width:120px;height:120px;flex:none;background:#fff;padding:6px;border-radius:8px;border:1px solid var(--line)}
+  /* ===== Modo computador ===== */
+  .brand{display:none}
+  nav .lbl{display:none}
+  .desk .proto-bar{max-width:1280px}
+  .desk .phone{max-width:1280px;flex-direction:row;border-radius:18px;height:calc(100vh - 80px)}
+  .desk nav{flex-direction:column;justify-content:flex-start;align-items:stretch;width:232px;flex:none;border-top:0;border-right:1px solid var(--line);padding:22px 12px;gap:2px;order:-1}
+  .desk nav .brand{display:block;order:-2;font-weight:800;font-size:16px;letter-spacing:-.01em;padding:0 12px 18px}
+  .desk nav .brand small{display:block;font-weight:500;font-size:12px;color:var(--muted);letter-spacing:0}
+  .desk nav button{flex-direction:row;justify-content:flex-start;gap:12px;font-size:14px;padding:10px 12px;border-radius:10px;min-width:0}
+  .desk nav button svg{width:20px;height:20px}
+  .desk nav button.on{background:var(--soft)}
+  .desk nav .plus{order:-1;width:auto;height:auto;margin:0 0 12px;border-radius:10px;padding:11px 12px;box-shadow:none;display:flex;place-items:initial;align-items:center}
+  .desk nav .plus .lbl{display:inline}
+  .desk main{padding:30px 40px 40px}
+  .desk h1{font-size:30px}
+  .desk .stats{grid-template-columns:repeat(4,1fr)}
+  .desk main .stack{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:10px}
+  .desk main .stack>*+*{margin-top:0}
+  .desk .search{max-width:560px}
+  .desk .btns{max-width:560px}
+  .desk #form-aluno,.desk #form-plano,.desk .field textarea{max-width:720px}
+  .desk .tabs{margin-left:-40px;margin-right:-40px;padding:0 40px}
+  .desk .chart{max-height:260px}
+  .desk .note,.desk .nome-ficha{max-width:560px}
+  .desk .scrim{align-items:center;justify-content:center}
+  .desk .sheet{max-width:560px;border-radius:20px;max-height:86%;padding-top:20px}
+  .desk .sheet .grab{display:none}
+  .desk .push{left:auto;right:20px;top:20px;width:360px}
+  .desk .toast{bottom:28px}
+  .logo-row{display:flex;align-items:center;gap:8px;margin-bottom:14px;font-family:var(--display);font-weight:900;font-size:18px;text-transform:uppercase;letter-spacing:.02em}
+  .logo-row b{background:var(--accent);padding:0 4px;font-weight:900}
+  .desk .logo-row{display:none}
+  .desk nav .brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:900;font-size:20px;text-transform:uppercase;letter-spacing:.02em;line-height:1}
+  .desk nav .brand b{color:var(--ink);background:var(--accent);padding:0 4px}
+  .desk nav .brand small{font-family:Archivo,sans-serif;text-transform:none;margin-top:4px}
+  .frase{margin-top:14px;background:var(--ink);color:#fff;border-radius:var(--r);padding:16px 18px;font-family:var(--display);font-weight:700;font-size:22px;line-height:1.1}
+  .frase span{color:var(--accent)}
+  .empty{text-align:center;color:var(--muted);padding:24px 0;font-size:14px}
+</style>
+</head>
+<body>
+<div class="proto">
+  <div class="proto-bar">
+    <div class="proto-tag"><b>Protótipo</b> · dados de exemplo</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <div class="switch">
+        <button data-act="layout" data-v="cel">Celular</button>
+        <button data-act="layout" data-v="desk">Computador</button>
+      </div>
+      <div class="switch">
+        <button data-act="modo" data-v="prof" class="on">Professor</button>
+        <button data-act="modo" data-v="aluno">Aluno</button>
+      </div>
+    </div>
+  </div>
+  <div class="phone" id="phone">
+    <main id="screen"></main>
+    <nav id="nav"></nav>
+  </div>
+</div>
+
+<script>
+/* ============ Ícones ============ */
+const I = {
+  home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>',
+  users:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-3.9 3.1-7 7-7s7 3.1 7 7"/><path d="M16 4.1a4 4 0 0 1 0 7.8M22 21c0-3-1.8-5.6-4.5-6.6"/></svg>',
+  plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  bell:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>',
+  more:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/></svg>',
+  search:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
+  wa:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2m0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2m4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.4.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 0 0 1.8-1.2 2.2 2.2 0 0 0 .1-1.3c0-.1-.2-.2-.4-.3"/></svg>',
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>',
+  back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>',
+  dumbbell:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6.5 6.5v11M17.5 6.5v11M3 9v6M21 9v6M6.5 12h11"/></svg>',
+  chart:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 6-6"/></svg>',
+  card:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>',
+  copy:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg>',
+  money:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
+};
+
+/* ============ Logo ============ */
+const barraDS = c => `<rect x="6" y="40" width="8" height="20" rx="2" fill="${c}"/><rect x="16" y="24" width="16" height="52" rx="3" fill="${c}"/><rect x="34" y="32" width="10" height="36" rx="2" fill="${c}"/><rect x="44" y="45" width="112" height="10" fill="${c}"/><rect x="156" y="32" width="10" height="36" rx="2" fill="${c}"/><rect x="168" y="24" width="16" height="52" rx="3" fill="${c}"/><rect x="186" y="40" width="8" height="20" rx="2" fill="${c}"/><text x="100" y="88" text-anchor="middle" font-family="'Big Shoulders Display',Impact,sans-serif" font-weight="900" font-size="100" fill="${c}">DS</text>`;
+// Símbolo em bloco (ícone, notificação)
+const logoMark = (px, fundo='#0E1A3B', traco='#FFC20E') => `<svg width="${px}" height="${px}" viewBox="0 0 120 120" aria-hidden="true" style="flex:none"><rect width="120" height="120" rx="24" fill="${fundo}"/><g transform="translate(8 34) scale(0.52)">${barraDS(traco)}</g></svg>`;
+// Símbolo solto, largo (cabeçalhos)
+const logoBarra = (h, cor='#0E1A3B') => `<svg width="${h*2}" height="${h}" viewBox="0 0 200 100" aria-hidden="true" style="flex:none">${barraDS(cor)}</svg>`;
+const logoRow = () => `<div class="logo-row">${logoMark(36)}<span>Academia <b>DS</b></span></div>`;
+const FRASE = `<div class="frase">O corpo alcança o que a <span>mente</span> sustenta.</div>`;
+
+/* ============ Datas ============ */
+const HOJE = new Date(); HOJE.setHours(0,0,0,0);
+const emDias = n => { const x = new Date(HOJE); x.setDate(x.getDate()+n); return x; };
+const addMeses = (dt, m, diaBase) => { const y = dt.getFullYear(), mo = dt.getMonth()+m; const ultimo = new Date(y, mo+1, 0).getDate(); return new Date(y, mo, Math.min(diaBase, ultimo)); };
+const fmt = dt => dt.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+const fmtLongo = dt => dt.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
+const dias = dt => Math.round((dt - HOJE)/864e5);
+const brl = v => v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const mesNome = HOJE.toLocaleDateString('pt-BR',{month:'long'});
+
+/* ============ Pix copia e cola (BR Code estático) ============ */
+function emv(id, v){ return id + String(v.length).padStart(2,'0') + v; }
+function crc16(s){ let c = 0xFFFF; for (let i=0;i<s.length;i++){ c ^= s.charCodeAt(i) << 8; for (let j=0;j<8;j++) c = (c & 0x8000) ? ((c << 1) ^ 0x1021) & 0xFFFF : (c << 1) & 0xFFFF; } return c.toString(16).toUpperCase().padStart(4,'0'); }
+function pixCopiaECola(valor){
+  const c = state.academia;
+  const p = emv('00','01') + emv('26', emv('00','br.gov.bcb.pix') + emv('01', c.chavePix)) + emv('52','0000') + emv('53','986') + emv('54', valor.toFixed(2)) + emv('58','BR') + emv('59', c.nomePix.slice(0,25)) + emv('60', c.cidadePix.slice(0,15)) + emv('62', emv('05','***')) + '6304';
+  return p + crc16(p);
+}
+
+/* ============ Dados de exemplo ============ */
+const BIBLIOTECA = [
+  ['Supino reto','Peito'],['Supino inclinado com halteres','Peito'],['Crucifixo máquina','Peito'],['Flexão de braço','Peito'],
+  ['Puxada frente','Costas'],['Remada baixa','Costas'],['Remada curvada','Costas'],['Barra fixa','Costas'],
+  ['Agachamento livre','Pernas'],['Leg press 45°','Pernas'],['Cadeira extensora','Pernas'],['Mesa flexora','Pernas'],['Panturrilha em pé','Pernas'],['Stiff','Pernas'],
+  ['Desenvolvimento com halteres','Ombros'],['Elevação lateral','Ombros'],
+  ['Rosca direta','Bíceps'],['Rosca martelo','Bíceps'],['Tríceps corda','Tríceps'],['Tríceps francês','Tríceps'],
+  ['Abdominal supra','Abdômen'],['Prancha','Abdômen'],['Esteira','Cardio'],['Bicicleta','Cardio'],
+].map(([nome,grupo]) => ({nome,grupo}));
+
+const ex = (nome, series, reps, carga, desc=60, obs='') => ({nome, series, reps, carga, desc, obs});
+const FICHAS_MODELO = {
+  A:{titulo:'Peito e tríceps', ex:[ex('Supino reto',4,10,30),ex('Supino inclinado com halteres',3,12,14),ex('Crucifixo máquina',3,12,25),ex('Tríceps corda',3,12,20),ex('Tríceps francês',3,10,10)]},
+  B:{titulo:'Costas e bíceps', ex:[ex('Puxada frente',4,10,40),ex('Remada baixa',3,12,35),ex('Remada curvada',3,10,30,60,'Coluna reta'),ex('Rosca direta',3,12,20),ex('Rosca martelo',3,12,10)]},
+  C:{titulo:'Pernas e ombros', ex:[ex('Agachamento livre',4,10,40,90,'Descer até 90°'),ex('Leg press 45°',4,12,120),ex('Cadeira extensora',3,12,30),ex('Mesa flexora',3,12,25),ex('Desenvolvimento com halteres',3,10,12),ex('Elevação lateral',3,12,6)]},
+};
+const clone = o => JSON.parse(JSON.stringify(o));
+
+const BASE = [
+  // nome, venc (dias a partir de hoje), whats, objetivo, restrição, forma
+  ['Ana Paula Souza',-12,'(12) 99812-4410','Emagrecimento','—','Pix'],
+  ['Bruno Ferreira',-5,'(12) 99734-0921','Hipertrofia','—','Pix'],
+  ['Carla Mendes',-2,'(12) 98845-1187','Condicionamento','Dor no joelho direito','Cartão'],
+  ['Diego Santos',0,'(12) 99621-7703','Hipertrofia','—','Pix'],
+  ['Fernanda Lima',1,'(12) 99107-3358','Emagrecimento','—','Pix'],
+  ['Gabriel Rocha',3,'(12) 98213-6640','Hipertrofia','Hérnia de disco (L5)','Dinheiro'],
+  ['Juliana Alves',6,'(12) 99530-2291','Saúde','Pressão alta','Pix'],
+  ['LUCAS',null,'(11) 97848-8523','Hipertrofia','—','Pix'],
+  ['Marcos Oliveira',10,'(12) 99677-8812','Condicionamento','—','Cartão'],
+  ['Patrícia Gomes',15,'(12) 98402-5519','Emagrecimento','—','Pix'],
+  ['Rafael Costa',19,'(12) 99288-0474','Hipertrofia','—','Pix'],
+  ['Seu João Batista',22,'(12) 98111-2036','Saúde','Idoso — liberar só máquinas','Dinheiro'],
+  ['Thiago Ribeiro',25,'(12) 99843-6627','Hipertrofia','—','Pix'],
+  ['Vanessa Dias',27,'(12) 99365-1902','Emagrecimento','—','Pix'],
+];
+
+function proximoDia13(){ const x = new Date(HOJE.getFullYear(), HOJE.getMonth(), 13); if (x < HOJE) x.setMonth(x.getMonth()+1); return x; }
+
+const state = {
+  layout: window.innerWidth > 900 ? 'desk' : 'cel',
+  modo:'prof', view:'inicio', alunoId:null, tab:'dados', ficha:'A', filtro:'todos', busca:'',
+  academia:{ nome:'Academia DS', professor:'Professor', chavePix:'academiads@email.com', nomePix:'ACADEMIA DS', cidadePix:'JACAREI', horario:'Seg a sáb · 4h30 às 22h' },
+  planos:[{id:'mensal', nome:'Mensal', valor:110, meses:1}],
+  avisos:[{data:emDias(-9), texto:'Feriado de quinta (12/10): academia aberta das 7h às 12h.'}],
+  alunos:[],
+  // lado aluno
+  fichaAluno:'B', feitos:{}, pushPendente:null, treinosMes:11,
+};
+
+BASE.forEach(([nome, off, whats, obj, restr, forma], i) => {
+  const isLucas = nome === 'LUCAS';
+  const venc = isLucas ? proximoDia13() : emDias(off);
+  const diaBase = isLucas ? 13 : venc.getDate();
+  const inicio = isLucas ? new Date(HOJE.getFullYear(), 7, 13) : addMeses(venc, -(3 + (i % 5)), diaBase);
+  const pags = [];
+  for (let k = 1; k <= 3; k++){ const dt = addMeses(venc, -k, diaBase); if (dt >= inicio) pags.push({data:dt, valor:110, forma}); }
+  const a = {
+    id: i+1, nome: isLucas ? 'Lucas Martz' : nome, whats, demoReal: isLucas, cpf:`***.${String(400+i*37).slice(0,3)}.${String(100+i*53).slice(0,3)}-**`,
+    nasc: `${String(3+i).padStart(2,'0')}/0${1+(i%9)}/${1975+i*2}`, obj, restr, plano:'mensal', forma, inicio, diaBase, venc,
+    fichas: clone(FICHAS_MODELO), avals: [], pags,
+  };
+  if (isLucas){
+    a.avals = [
+      {data:new Date(HOJE.getFullYear(),7,13), peso:78.4, gordura:22.0, cintura:88.0, braco:33.0},
+      {data:new Date(HOJE.getFullYear(),8,1),  peso:77.1, gordura:21.0, cintura:86.5, braco:33.5},
+      {data:new Date(HOJE.getFullYear(),8,20), peso:76.0, gordura:19.8, cintura:85.0, braco:34.0},
+      {data:emDias(-3),                        peso:75.2, gordura:19.0, cintura:84.0, braco:34.5},
+    ];
+  } else {
+    const p = 62 + (i*3.7)%28;
+    a.avals = [
+      {data:inicio, peso:+(p+2.4).toFixed(1), gordura:+(24+(i%6)).toFixed(1), cintura:+(80+(i%9)*1.5).toFixed(1), braco:+(28+(i%7)).toFixed(1)},
+      {data:emDias(-20), peso:+p.toFixed(1), gordura:+(22.6+(i%6)).toFixed(1), cintura:+(78.5+(i%9)*1.5).toFixed(1), braco:+(28.5+(i%7)).toFixed(1)},
+    ];
+  }
+  state.alunos.push(a);
+});
+const LUCAS_ID = state.alunos.find(a => a.nome === 'Lucas Martz').id;
+
+/* ============ Helpers de domínio ============ */
+const aluno = id => state.alunos.find(a => a.id === id);
+const plano = id => state.planos.find(p => p.id === id) || state.planos[0];
+const status = a => { const n = dias(a.venc); return n < 0 ? 'vencido' : n <= 7 ? 'vence' : 'ok'; };
+const statusTxt = a => { const n = dias(a.venc); return n < 0 ? `Venceu há ${-n} dia${-n>1?'s':''}` : n === 0 ? 'Vence hoje' : n <= 7 ? `Vence em ${n} dia${n>1?'s':''}` : `Em dia · vence ${fmt(a.venc)}`; };
+const badge = a => { const s = status(a); const cls = s === 'vencido' ? 'b-bad' : s === 'vence' ? 'b-warn' : 'b-ok'; return `<span class="badge ${cls}">${statusTxt(a)}</span>`; };
+const iniciais = n => n.split(' ').filter(Boolean).slice(0,2).map(p => p[0]).join('').toUpperCase();
+const primeiroNome = n => n.split(' ')[0] === 'Seu' ? n.split(' ').slice(0,2).join(' ') : n.split(' ')[0];
+const norm = s => s.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+// Só o aluno de demonstração (Lucas) tem número real; os outros abrem o WhatsApp sem contato
+const waLink = (a, texto) => `https://wa.me/${a.demoReal ? '55' + a.whats.replace(/\D/g,'') : ''}?text=${encodeURIComponent(texto)}`;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function msgCobranca(a){
+  const p = plano(a.plano); const n = dias(a.venc);
+  const quando = n < 0 ? `venceu dia ${fmt(a.venc)}` : n === 0 ? 'vence hoje' : `vence dia ${fmt(a.venc)}`;
+  return `Oi ${primeiroNome(a.nome)}, tudo bem? Teu plano ${p.nome.toLowerCase()} da ${state.academia.nome} ${quando}.\n\nPra renovar, é só pagar ${brl(p.valor)} no Pix copia e cola abaixo:\n\n${pixCopiaECola(p.valor)}\n\nQualquer coisa me chama. Bom treino! 💪`;
+}
+
+/* ============ Render: Professor ============ */
+function navProf(){
+  const b = (v, ic, l) => `<button data-act="nav" data-v="${v}" class="${state.view===v || (v==='alunos' && state.view==='aluno') ? 'on':''}">${I[ic]}${l}</button>`;
+  return `<div class="brand">${logoMark(42)}<div>Academia <b>DS</b><small>Painel do professor</small></div></div>` + b('inicio','home','Início') + b('alunos','users','Alunos') + `<button class="plus" data-act="nav" data-v="novo" aria-label="Novo aluno">${I.plus}<span class="lbl">Novo aluno</span></button>` + b('avisos','bell','Avisos') + b('mais','more','Mais');
+}
+
+function linhaAluno(a, acoes=true){
+  return `<div class="item">
+    <div class="avatar">${iniciais(a.nome)}</div>
+    <div class="who" data-act="abrir" data-id="${a.id}"><div class="name">${esc(a.nome)}</div>${badge(a)}</div>
+    ${acoes ? (status(a) !== 'ok'
+      ? `<button class="icon-btn wa" data-act="cobrar" data-id="${a.id}" title="Cobrar no WhatsApp">${I.wa}</button><button class="icon-btn ok" data-act="pago" data-id="${a.id}" title="Registrar pagamento">${I.check}</button>`
+      : `<button class="icon-btn" data-act="whats" data-id="${a.id}" title="Abrir WhatsApp" style="color:var(--wa)">${I.wa}</button>`) : ''}
+  </div>`;
+}
+
+function resultadosBusca(){
+  const q = norm(state.busca.trim());
+  if (!q) return '';
+  const r = state.alunos.filter(a => norm(a.nome).includes(q) || a.whats.replace(/\D/g,'').includes(q.replace(/\D/g,'') || '#'));
+  return r.length ? `<div class="stack" style="margin-top:8px">${r.map(a => linhaAluno(a)).join('')}</div>` : `<div class="empty">Nenhum aluno encontrado</div>`;
+}
+
+function vInicio(){
+  const al = state.alunos;
+  const vencidos = al.filter(a => status(a) === 'vencido');
+  const vencendo = al.filter(a => status(a) === 'vence');
+  const ativos = al.filter(a => status(a) !== 'vencido');
+  const noMes = al.filter(a => a.venc.getMonth() === HOJE.getMonth() && a.venc.getFullYear() === HOJE.getFullYear());
+  const aReceber = noMes.reduce((s,a) => s + plano(a.plano).valor, 0);
+  const emAtraso = vencidos.reduce((s,a) => s + plano(a.plano).valor, 0);
+  const cobrar = [...vencidos, ...vencendo].sort((a,b) => a.venc - b.venc);
+  const h = new Date().getHours(); const saud = h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
+  return `
+    ${logoRow()}
+    <div class="sub">${fmtLongo(HOJE).replace(/^./, c => c.toUpperCase())}</div>
+    <h1>${saud}, ${state.academia.professor}</h1>
+    <label class="search">${I.search}<input id="busca" placeholder="Buscar aluno pelo nome ou número" value="${esc(state.busca)}" autocomplete="off"></label>
+    <div id="busca-res">${resultadosBusca()}</div>
+    <div class="stats">
+      <div class="stat"><div class="n">${ativos.length}</div><div class="l">Alunos ativos</div></div>
+      <div class="stat warn"><div class="n">${vencendo.length}</div><div class="l">Vencem em 7 dias</div></div>
+      <div class="stat bad"><div class="n">${vencidos.length}</div><div class="l">Vencidos · ${brl(emAtraso)}</div></div>
+      <div class="stat dark"><div class="n">${brl(aReceber).replace(',00','')}</div><div class="l">A receber em ${mesNome}</div></div>
+    </div>
+    <h2>Cobrar agora</h2>
+    <div class="stack">${cobrar.length ? cobrar.map(a => linhaAluno(a)).join('') : '<div class="empty">Ninguém pra cobrar. Tudo em dia 🎉</div>'}</div>
+    <div class="note">No botão verde, o WhatsApp abre com a mensagem e o Pix copia e cola prontos. No preto, ele registra o pagamento e renova o vencimento.</div>`;
+}
+
+function vAlunos(){
+  const f = state.filtro;
+  const q = norm(state.busca.trim());
+  let lista = state.alunos.filter(a => f === 'todos' || status(a) === f);
+  if (q) lista = lista.filter(a => norm(a.nome).includes(q));
+  lista.sort((a,b) => a.nome.localeCompare(b.nome));
+  const chip = (v,l) => `<button class="chip ${f===v?'on':''}" data-act="filtro" data-v="${v}">${l}</button>`;
+  return `
+    <h1>Alunos</h1><div class="sub">${state.alunos.length} cadastrados</div>
+    <label class="search">${I.search}<input id="busca" placeholder="Buscar aluno" value="${esc(state.busca)}" autocomplete="off"></label>
+    <div class="chips">${chip('todos','Todos')}${chip('ok','Em dia')}${chip('vence','Vencendo')}${chip('vencido','Vencidos')}</div>
+    <div class="stack" style="margin-top:12px" id="lista-alunos">${lista.length ? lista.map(a => linhaAluno(a)).join('') : '<div class="empty">Nenhum aluno aqui</div>'}</div>`;
+}
+
+function vAluno(){
+  const a = aluno(state.alunoId); const p = plano(a.plano);
+  const tab = (v,l) => `<button class="${state.tab===v?'on':''}" data-act="tab" data-v="${v}">${l}</button>`;
+  let corpo = '';
+  if (state.tab === 'dados') corpo = `
+    <div class="card"><dl class="kv">
+      <dt>WhatsApp</dt><dd>${a.whats}</dd><dt>CPF</dt><dd>${a.cpf}</dd><dt>Nascimento</dt><dd>${a.nasc}</dd>
+      <dt>Objetivo</dt><dd>${esc(a.obj)}</dd><dt>Restrições</dt><dd>${esc(a.restr)}</dd>
+    </dl></div>
+    <div class="card" style="margin-top:8px"><dl class="kv">
+      <dt>Plano</dt><dd>${p.nome} · ${brl(p.valor)}</dd><dt>Pagamento</dt><dd>${a.forma}</dd>
+      <dt>Aluno desde</dt><dd>${a.inicio.toLocaleDateString('pt-BR')}</dd><dt>Vence todo dia</dt><dd>${a.diaBase}</dd>
+      <dt>Próximo vencimento</dt><dd>${a.venc.toLocaleDateString('pt-BR')}</dd>
+    </dl></div>`;
+  if (state.tab === 'treino') corpo = vFichaEditor(a);
+  if (state.tab === 'aval') corpo = vAvaliacao(a, true);
+  if (state.tab === 'pags') corpo = `<div class="stack">${a.pags.length ? [...a.pags].sort((x,y) => y.data - x.data).map(g => `<div class="item"><div class="avatar">${I.money.replace('<svg','<svg style="width:18px;height:18px"')}</div><div class="who"><div class="name">${brl(g.valor)}</div><div class="sub">${g.data.toLocaleDateString('pt-BR')} · ${g.forma}</div></div></div>`).join('') : '<div class="empty">Nenhum pagamento registrado</div>'}</div>`;
+  return `
+    <button class="back" data-act="nav" data-v="alunos">${I.back}Alunos</button>
+    <div class="row-between"><div style="min-width:0"><h1>${esc(a.nome)}</h1>${badge(a)}</div><div class="avatar" style="width:48px;height:48px;font-size:16px">${iniciais(a.nome)}</div></div>
+    <div class="btns" style="margin-top:14px">
+      <button class="btn ghost" data-act="whats" data-id="${a.id}" style="color:var(--wa)">${I.wa}WhatsApp</button>
+      <button class="btn wa" data-act="cobrar" data-id="${a.id}">${I.money}Cobrar</button>
+      <button class="btn" data-act="pago" data-id="${a.id}">${I.check}Registrar pagamento</button>
+    </div>
+    <div class="tabs">${tab('dados','Dados')}${tab('treino','Treino')}${tab('aval','Avaliação')}${tab('pags','Pagamentos')}</div>
+    ${corpo}`;
+}
+
+function vFichaEditor(a){
+  const f = a.fichas[state.ficha];
+  const chip = k => `<button class="chip ${state.ficha===k?'on':''}" data-act="ficha" data-v="${k}">Ficha ${k}</button>`;
+  return `
+    <div class="chips" style="margin-top:0">${Object.keys(a.fichas).map(chip).join('')}<button class="chip" data-act="nova-ficha">+ Ficha</button></div>
+    <label class="field nome-ficha" style="margin-top:12px"><span>Nome da ficha</span><input data-input="titulo" value="${esc(f.titulo)}"></label>
+    <div class="stack">${f.ex.map((e,i) => `
+      <div class="ex-edit">
+        <div class="row-between"><div class="n">${i+1}. ${esc(e.nome)}</div><button class="x" data-act="rm-ex" data-i="${i}" aria-label="Remover">×</button></div>
+        <div class="ex-campos">
+          <label><span>Séries</span><input type="number" inputmode="numeric" min="1" data-input="campo" data-f="series" data-i="${i}" value="${e.series}"></label>
+          <label><span>Repetições</span><input inputmode="numeric" data-input="campo" data-f="reps" data-i="${i}" value="${esc(e.reps)}"></label>
+          <label><span>Carga (kg)</span><input type="number" inputmode="decimal" data-input="campo" data-f="carga" data-i="${i}" value="${e.carga}"></label>
+          <label><span>Descanso (s)</span><input type="number" inputmode="numeric" step="15" data-input="campo" data-f="desc" data-i="${i}" value="${e.desc}"></label>
+        </div>
+        <input class="ex-obs" data-input="campo" data-f="obs" data-i="${i}" value="${esc(e.obs)}" placeholder="Observação (ex.: coluna reta, pegada aberta)">
+      </div>`).join('') || '<div class="empty">Ficha vazia</div>'}</div>
+    <div class="btns" style="margin-top:12px">
+      <button class="btn ghost" data-act="add-ex">${I.plus}Exercício</button>
+      <button class="btn ghost" data-act="copiar-ficha">${I.copy}Copiar de outro aluno</button>
+    </div>
+    <div class="note">A carga editada aqui aparece na hora no celular do aluno.</div>`;
+}
+
+function grafico(pontos, unidade){
+  if (pontos.length < 2) return '';
+  const W = 340, H = 150, px = 30, py = 22;
+  const vs = pontos.map(p => p.v); const min = Math.min(...vs), max = Math.max(...vs); const span = (max - min) || 1;
+  const X = i => px + i * (W - px*2) / (pontos.length - 1);
+  const Y = v => py + (1 - (v - min) / span) * (H - py*2 - 10);
+  const pts = pontos.map((p,i) => `${X(i)},${Y(p.v)}`).join(' ');
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Evolução">
+    <line x1="${px}" x2="${W-px}" y1="${H-18}" y2="${H-18}" stroke="#E4E2DE"/>
+    <polyline points="${pts}" fill="none" stroke="#0E1A3B" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+    ${pontos.map((p,i) => `<circle cx="${X(i)}" cy="${Y(p.v)}" r="4.5" fill="${i===pontos.length-1?'#FFC20E':'#fff'}" stroke="#0E1A3B" stroke-width="2"/>
+      <text x="${X(i)}" y="${Y(p.v)-10}" text-anchor="middle" font-size="11" font-weight="700" fill="#0E1A3B">${String(p.v).replace('.',',')}</text>
+      <text x="${X(i)}" y="${H-4}" text-anchor="middle" font-size="10" fill="#6B6B6B">${p.l}</text>`).join('')}
+  </svg>`;
+}
+
+function vAvaliacao(a, prof){
+  const av = [...a.avals].sort((x,y) => x.data - y.data);
+  if (!av.length) return `<div class="empty">Nenhuma avaliação ainda</div>${prof?`<button class="btn" data-act="nova-aval">${I.plus}Nova avaliação</button>`:''}`;
+  const ult = av[av.length-1], pri = av[0];
+  const d = (k, u, bomCaindo=true) => { const v = +(ult[k] - pri[k]).toFixed(1); if (!v) return ''; const cls = (v < 0) === bomCaindo ? 'down' : 'up'; return `<span class="delta ${cls}">${v>0?'+':''}${String(v).replace('.',',')}${u}</span>`; };
+  return `
+    <div class="stats" style="margin-top:0">
+      <div class="stat"><div class="n">${String(ult.peso).replace('.',',')}<small style="font-size:14px"> kg</small></div><div class="l">Peso ${d('peso',' kg')}</div></div>
+      <div class="stat"><div class="n">${String(ult.gordura).replace('.',',')}<small style="font-size:14px">%</small></div><div class="l">Gordura ${d('gordura','%')}</div></div>
+      <div class="stat"><div class="n">${String(ult.cintura).replace('.',',')}<small style="font-size:14px"> cm</small></div><div class="l">Cintura ${d('cintura',' cm')}</div></div>
+      <div class="stat"><div class="n">${String(ult.braco).replace('.',',')}<small style="font-size:14px"> cm</small></div><div class="l">Braço ${d('braco',' cm',false)}</div></div>
+    </div>
+    <h2>Peso (kg)</h2>
+    <div class="card">${grafico(av.map(x => ({v:x.peso, l:fmt(x.data)})))}</div>
+    <h2>Histórico</h2>
+    <div class="card" style="overflow-x:auto"><table class="hist"><tr><th>Data</th><th>Peso</th><th>Gord.</th><th>Cint.</th><th>Braço</th></tr>
+      ${[...av].reverse().map(x => `<tr><td>${x.data.toLocaleDateString('pt-BR')}</td><td>${x.peso}</td><td>${x.gordura}%</td><td>${x.cintura}</td><td>${x.braco}</td></tr>`).join('')}</table></div>
+    ${prof ? `<button class="btn" style="margin-top:12px" data-act="nova-aval">${I.plus}Nova avaliação</button>` : ''}`;
+}
+
+function qrFake(){
+  let s = 7, cells = '';
+  const rnd = () => (s = (s * 9301 + 49297) % 233280) / 233280;
+  const N = 25, finder = (x,y) => (x<7&&y<7)||(x>=N-7&&y<7)||(x<7&&y>=N-7);
+  for (let y=0;y<N;y++) for (let x=0;x<N;x++){
+    let on;
+    if (finder(x,y)){ const fx = x<7?x:x-(N-7), fy = y<7?y:y-(N-7); on = fx===0||fx===6||fy===0||fy===6||(fx>=2&&fx<=4&&fy>=2&&fy<=4); }
+    else on = rnd() > .52;
+    if (on) cells += `<rect x="${x}" y="${y}" width="1" height="1"/>`;
+  }
+  return `<svg class="qr" viewBox="0 0 ${N} ${N}" shape-rendering="crispEdges"><g fill="#0E1A3B">${cells}</g></svg>`;
+}
+
+function vNovo(){
+  const hoje = HOJE.toISOString().slice(0,10);
+  return `
+    <h1>Novo aluno</h1><div class="sub">Leva menos de 1 minuto</div>
+    <div class="card" style="display:flex;gap:14px;align-items:center;margin-top:14px">${qrFake()}
+      <div><b>Ou deixe o aluno se cadastrar</b><div class="sub" style="margin-top:4px">QR code fixo no balcão. O aluno preenche no celular dele e você só confere e aprova.</div></div></div>
+    <h2>Dados</h2>
+    <form id="form-aluno">
+      <label class="field"><span>Nome completo</span><input name="nome" required placeholder="Ex.: Maria da Silva"></label>
+      <div class="grid2">
+        <label class="field"><span>WhatsApp</span><input name="whats" required inputmode="tel" placeholder="(12) 99999-9999"></label>
+        <label class="field"><span>CPF</span><input name="cpf" inputmode="numeric" placeholder="000.000.000-00"></label>
+      </div>
+      <div class="grid2">
+        <label class="field"><span>Nascimento</span><input name="nasc" placeholder="dd/mm/aaaa"></label>
+        <label class="field"><span>Objetivo</span><select name="obj"><option>Hipertrofia</option><option>Emagrecimento</option><option>Condicionamento</option><option>Saúde</option></select></label>
+      </div>
+      <label class="field"><span>Lesões ou restrições</span><input name="restr" placeholder="Ex.: dor no joelho, pressão alta"></label>
+      <h2>Plano</h2>
+      <div class="grid2">
+        <label class="field"><span>Plano</span><select name="plano">${state.planos.map(p => `<option value="${p.id}">${p.nome} · ${brl(p.valor)}</option>`).join('')}</select></label>
+        <label class="field"><span>Forma de pagamento</span><select name="forma"><option>Pix</option><option>Cartão</option><option>Dinheiro</option></select></label>
+      </div>
+      <label class="field"><span>Data de início (vence todo mês nesse dia)</span><input type="date" name="inicio" value="${hoje}"></label>
+      <button class="btn lime" type="submit">Salvar aluno</button>
+    </form>`;
+}
+
+function vAvisos(){
+  const tpl = ['Academia fechada neste fim de semana.','Feriado: abriremos das 7h às 12h.','Hoje fecharemos mais cedo, às 20h.'];
+  return `
+    <h1>Avisos</h1><div class="sub">Chega como notificação no celular de quem instalou o app</div>
+    <div class="chips">${tpl.map(t => `<button class="chip" data-act="tpl" data-v="${esc(t)}">${esc(t.split(':')[0].split('.')[0])}</button>`).join('')}</div>
+    <label class="field" style="margin-top:12px"><span>Mensagem</span><textarea id="aviso-txt" placeholder="Ex.: Academia fechada sábado e domingo."></textarea></label>
+    <div class="btns">
+      <button class="btn" data-act="enviar-aviso">${I.bell}Enviar notificação</button>
+      <button class="btn ghost" data-act="copiar-aviso">${I.wa}Copiar p/ WhatsApp</button>
+    </div>
+    <h2>Enviados</h2>
+    <div class="stack">${[...state.avisos].sort((a,b) => b.data - a.data).map(v => `<div class="card"><div class="sub">${v.data.toLocaleDateString('pt-BR')}</div><div style="margin-top:2px">${esc(v.texto)}</div></div>`).join('')}</div>`;
+}
+
+function vMais(){
+  const c = state.academia;
+  return `
+    <h1>Configurações</h1><div class="sub">${c.nome}</div>
+    <h2>Planos</h2>
+    <div class="stack">${state.planos.map(p => `<div class="item"><div class="who"><div class="name">${p.nome}</div><div class="sub">${p.meses} ${p.meses>1?'meses':'mês'} · ${state.alunos.filter(a=>a.plano===p.id).length} alunos</div></div><b>${brl(p.valor)}</b></div>`).join('')}</div>
+    <form id="form-plano" class="card" style="margin-top:8px">
+      <div class="grid2"><label class="field"><span>Novo plano</span><input name="nome" placeholder="Trimestral" required></label>
+      <label class="field"><span>Valor (R$)</span><input name="valor" type="number" inputmode="decimal" placeholder="300" required></label></div>
+      <label class="field"><span>Duração</span><select name="meses"><option value="1">1 mês</option><option value="3">3 meses</option><option value="6">6 meses</option><option value="12">12 meses</option></select></label>
+      <button class="btn ghost" type="submit">${I.plus}Adicionar plano</button>
+    </form>
+    <h2>Recebimento</h2>
+    <div class="card"><dl class="kv"><dt>Chave Pix</dt><dd>${c.chavePix}</dd><dt>Taxa</dt><dd>Nenhuma (Pix direto na conta)</dd></dl></div>
+    <h2>Academia</h2>
+    <div class="card"><dl class="kv"><dt>Horário</dt><dd>${c.horario}</dd><dt>Exercícios na biblioteca</dt><dd>${BIBLIOTECA.length}</dd></dl></div>`;
+}
+
+/* ============ Render: Aluno ============ */
+function navAluno(){
+  const b = (v, ic, l) => `<button data-act="nav" data-v="${v}" class="${state.view===v?'on':''}">${I[ic]}${l}</button>`;
+  return `<div class="brand">${logoMark(42)}<div>Academia <b>DS</b><small>Área do aluno</small></div></div>` + b('hoje','dumbbell','Treino') + b('evolucao','chart','Evolução') + b('plano','card','Plano') + b('a-avisos','bell','Avisos');
+}
+
+function vHoje(){
+  const a = aluno(LUCAS_ID); const k = state.fichaAluno; const f = a.fichas[k];
+  const feitos = state.feitos[k] || [];
+  const aviso = [...state.avisos].sort((x,y) => y.data - x.data)[0];
+  const recente = aviso && dias(aviso.data) >= -10;
+  const n = dias(a.venc);
+  return `
+    ${logoRow()}
+    <h1>Bora treinar, ${primeiroNome(a.nome)}</h1>
+    ${recente ? `<div class="notice">${I.bell}<div><b>Aviso da academia</b><br>${esc(aviso.texto)}</div></div>` : ''}
+    <div class="hero">
+      <div class="k">Treino de hoje</div>
+      <div class="t">Ficha ${k} · ${esc(f.titulo)}</div>
+      <div class="chips" style="margin-top:0">${Object.keys(a.fichas).map(x => `<button class="chip ${x===k?'on':''}" style="${x===k?'background:#FFC20E;color:#0E1A3B;border-color:#FFC20E':'background:transparent;color:#C9D2E6;border-color:#2B3A66'}" data-act="ficha-aluno" data-v="${x}">Ficha ${x}</button>`).join('')}</div>
+    </div>
+    <h2>${feitos.length}/${f.ex.length} feitos</h2>
+    <div class="stack">${f.ex.map((e,i) => { const on = feitos.includes(i); return `
+      <div class="ex ${on?'done':''}">
+        <button class="check ${on?'on':''}" data-act="check" data-i="${i}" aria-label="Marcar feito">${on?I.check:''}</button>
+        <div class="grow"><div class="n">${esc(e.nome)}</div><div class="m">${e.series}×${e.reps} · descanso ${e.desc}s${e.obs?` · ${esc(e.obs)}`:''}</div></div>
+        <label class="kg"><input type="number" inputmode="decimal" data-input="carga-aluno" data-i="${i}" value="${e.carga}">kg</label>
+      </div>`; }).join('')}</div>
+    <button class="btn lime" style="margin-top:14px" data-act="concluir">${I.check}Concluir treino</button>
+    <div class="card" style="margin-top:14px" data-act="nav" data-v="plano"><div class="row-between"><div><b>Plano mensal</b><div class="sub">${n < 0 ? 'Vencido' : `Vence dia ${fmt(a.venc)} · em ${n} dia${n!==1?'s':''}`}</div></div>${I.card.replace('<svg','<svg style="width:22px;height:22px;color:#5B6787"')}</div></div>
+    ${FRASE}`;
+}
+
+function vEvolucao(){
+  const a = aluno(LUCAS_ID);
+  return `<h1>Sua evolução</h1><div class="sub">Medidas feitas pelo professor</div><div style="margin-top:14px">${vAvaliacao(a, false)}</div>`;
+}
+
+function vPlano(){
+  const a = aluno(LUCAS_ID); const p = plano(a.plano); const n = dias(a.venc);
+  return `
+    <h1>Seu plano</h1><div class="sub">${state.academia.nome}</div>
+    <div class="hero"><div class="k">Plano ${p.nome.toLowerCase()}</div><div class="t" style="font-size:28px">${brl(p.valor)}</div>
+      <div>${n < 0 ? `Venceu em ${a.venc.toLocaleDateString('pt-BR')}` : `Próximo vencimento: <b>${a.venc.toLocaleDateString('pt-BR')}</b>`}</div></div>
+    <h2>Pagar com Pix</h2>
+    <div class="pix">${pixCopiaECola(p.valor)}</div>
+    <button class="btn" style="margin-top:8px" data-act="copiar-pix">${I.copy}Copiar código Pix</button>
+    <div class="note">Cole no app do banco em "Pix copia e cola". O professor confirma o recebimento.</div>
+    <h2>Pagamentos</h2>
+    <div class="stack">${[...a.pags].sort((x,y)=>y.data-x.data).map(g => `<div class="item"><div class="who"><div class="name">${brl(g.valor)}</div><div class="sub">${g.data.toLocaleDateString('pt-BR')} · ${g.forma}</div></div><span class="badge b-ok">Pago</span></div>`).join('') || '<div class="empty">Nenhum pagamento ainda</div>'}</div>`;
+}
+
+function vAvisosAluno(){
+  return `<h1>Avisos</h1><div class="sub">Da ${state.academia.nome}</div>
+    <div class="stack" style="margin-top:14px">${[...state.avisos].sort((a,b)=>b.data-a.data).map(v => `<div class="card"><div class="sub">${v.data.toLocaleDateString('pt-BR')}</div><div style="margin-top:2px">${esc(v.texto)}</div></div>`).join('')}</div>`;
+}
+
+/* ============ Sheets & toast ============ */
+const phone = document.getElementById('phone');
+function sheet(html){ fecharSheet(); const s = document.createElement('div'); s.className = 'scrim'; s.id = 'scrim'; s.innerHTML = `<div class="sheet"><div class="grab"></div>${html}</div>`; s.addEventListener('click', e => { if (e.target === s) fecharSheet(); }); phone.appendChild(s); }
+function fecharSheet(){ document.getElementById('scrim')?.remove(); }
+let toastT;
+function toast(t){ document.querySelector('.toast')?.remove(); const el = document.createElement('div'); el.className = 'toast'; el.textContent = t; phone.appendChild(el); clearTimeout(toastT); toastT = setTimeout(() => el.remove(), 2600); }
+async function copiar(t, ok){ try { await navigator.clipboard.writeText(t); } catch(e) {} toast(ok); }
+
+function sheetCobrar(a){
+  const m = msgCobranca(a);
+  sheet(`<h3>Cobrar ${esc(primeiroNome(a.nome))}</h3>
+    <label for="msg-cobranca" class="sub" style="display:block;margin-bottom:6px">Toque no texto para editar antes de enviar</label>
+    <textarea id="msg-cobranca" class="msg" data-id="${a.id}" rows="12">${esc(m)}</textarea>
+    <div class="btns" style="margin-top:12px">
+      <button class="btn ghost" data-act="copiar-msg" data-id="${a.id}">${I.copy}Copiar</button>
+      <a class="btn wa" id="wa-envio" href="${waLink(a, m)}" target="_blank" rel="noopener" style="text-decoration:none">${I.wa}Abrir WhatsApp</a>
+    </div>
+    ${a.demoReal ? '' : `<div class="note">No sistema de verdade, o WhatsApp abre direto na conversa com ${esc(a.whats)}. No protótipo, só o aluno Lucas Martz tem número real.</div>`}`);
+}
+
+function sheetPago(a){
+  const p = plano(a.plano); const novo = addMeses(a.venc, p.meses, a.diaBase);
+  sheet(`<h3>Registrar pagamento</h3>
+    <div class="card"><dl class="kv"><dt>Aluno</dt><dd>${esc(a.nome)}</dd><dt>Plano</dt><dd>${p.nome} · ${brl(p.valor)}</dd><dt>Vencimento atual</dt><dd>${a.venc.toLocaleDateString('pt-BR')}</dd><dt>Novo vencimento</dt><dd><b>${novo.toLocaleDateString('pt-BR')}</b></dd></dl></div>
+    <label class="field" style="margin-top:12px"><span>Recebido via</span><select id="forma-pag">${['Pix','Cartão','Dinheiro'].map(f => `<option ${f===a.forma?'selected':''}>${f}</option>`).join('')}</select></label>
+    <button class="btn" data-act="confirmar-pago" data-id="${a.id}">${I.check}Confirmar ${brl(p.valor)}</button>`);
+}
+
+function sheetAddEx(){
+  const grupos = [...new Set(BIBLIOTECA.map(b => b.grupo))];
+  sheet(`<h3>Adicionar exercício</h3>
+    <form id="form-ex" class="card">
+      <b>Criar exercício novo</b><div class="sub" style="margin:2px 0 10px">Fica salvo na biblioteca pra usar com outros alunos.</div>
+      <label class="field"><span>Nome</span><input name="nome" required placeholder="Ex.: Puxador de máquina"></label>
+      <div class="grid2">
+        <label class="field"><span>Grupo muscular</span><select name="grupo">${grupos.map(g => `<option>${g}</option>`).join('')}</select></label>
+        <label class="field"><span>Séries × repetições</span><div style="display:flex;gap:6px;align-items:center"><input name="series" type="number" inputmode="numeric" value="3" style="text-align:center">×<input name="reps" inputmode="numeric" value="12" style="text-align:center"></div></label>
+      </div>
+      <div class="grid2">
+        <label class="field"><span>Carga (kg)</span><input name="carga" type="number" inputmode="decimal" value="10"></label>
+        <label class="field"><span>Descanso (s)</span><input name="desc" type="number" inputmode="numeric" step="15" value="60"></label>
+      </div>
+      <button class="btn" type="submit">${I.plus}Criar e adicionar à Ficha ${state.ficha}</button>
+    </form>
+    <h2 style="margin-top:18px">Ou escolha da biblioteca</h2>
+    <label class="search" style="margin-top:0">${I.search}<input id="busca-ex" placeholder="Buscar exercício" autocomplete="off"></label>
+    ${grupos.map(g => `<div class="grupo-ex"><h2 style="margin-top:14px">${g}</h2><div class="stack">${BIBLIOTECA.filter(b => b.grupo===g).map(b => `<button class="item" style="width:100%;text-align:left" data-act="pick-ex" data-v="${esc(b.nome)}" data-busca="${esc(norm(b.nome))}"><div class="who"><div class="name">${esc(b.nome)}</div></div>${I.plus.replace('<svg','<svg style="width:18px;height:18px"')}</button>`).join('')}</div></div>`).join('')}`);
+}
+
+function sheetCopiarFicha(){
+  const atual = aluno(state.alunoId);
+  sheet(`<h3>Copiar Ficha ${state.ficha} de…</h3><div class="sub" style="margin:-6px 0 12px">Substitui a Ficha ${state.ficha} de ${esc(primeiroNome(atual.nome))}. Depois é só ajustar as cargas.</div>
+    <div class="stack">${state.alunos.filter(a => a.id !== atual.id).map(a => `<button class="item" style="width:100%;text-align:left" data-act="copiar-de" data-id="${a.id}"><div class="avatar">${iniciais(a.nome)}</div><div class="who"><div class="name">${esc(a.nome)}</div><div class="sub">Ficha ${state.ficha} · ${esc(a.fichas[state.ficha]?.titulo || '—')}</div></div></button>`).join('')}</div>`);
+}
+
+function sheetNovaAval(){
+  sheet(`<h3>Nova avaliação</h3>
+    <form id="form-aval">
+      <div class="grid2">
+        <label class="field"><span>Peso (kg)</span><input name="peso" type="number" step="0.1" inputmode="decimal" required></label>
+        <label class="field"><span>Gordura (%)</span><input name="gordura" type="number" step="0.1" inputmode="decimal" required></label>
+        <label class="field"><span>Cintura (cm)</span><input name="cintura" type="number" step="0.1" inputmode="decimal" required></label>
+        <label class="field"><span>Braço (cm)</span><input name="braco" type="number" step="0.1" inputmode="decimal" required></label>
+      </div>
+      <button class="btn" type="submit">Salvar avaliação</button>
+    </form>`);
+}
+
+/* ============ Render principal ============ */
+const screen = document.getElementById('screen');
+const nav = document.getElementById('nav');
+function render(){
+  const v = state.view;
+  const views = { inicio:vInicio, alunos:vAlunos, aluno:vAluno, novo:vNovo, avisos:vAvisos, mais:vMais, hoje:vHoje, evolucao:vEvolucao, plano:vPlano, 'a-avisos':vAvisosAluno };
+  screen.innerHTML = views[v]();
+  nav.innerHTML = state.modo === 'prof' ? navProf() : navAluno();
+  document.querySelectorAll('[data-act="modo"]').forEach(b => b.classList.toggle('on', b.dataset.v === state.modo));
+  document.querySelectorAll('[data-act="layout"]').forEach(b => b.classList.toggle('on', b.dataset.v === state.layout));
+  document.body.classList.toggle('desk', state.layout === 'desk');
+  if (state.modo === 'aluno' && state.pushPendente){
+    const t = state.pushPendente; state.pushPendente = null;
+    const el = document.createElement('div'); el.className = 'push';
+    el.innerHTML = `${logoMark(34)}<div><b>${esc(state.academia.nome)} · agora</b><p>${esc(t)}</p></div>`;
+    phone.appendChild(el); setTimeout(() => el.remove(), 5000);
+  }
+}
+function ir(view, extra = {}){ Object.assign(state, {view}, extra); fecharSheet(); render(); screen.scrollTop = 0; }
+
+/* ============ Eventos ============ */
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  const act = el.dataset.act, id = +el.dataset.id, v = el.dataset.v, i = +el.dataset.i;
+  const a = id ? aluno(id) : null;
+  switch (act){
+    case 'layout': state.layout = v; render(); break;
+    case 'modo':state.modo = v; fecharSheet(); ir(v === 'prof' ? 'inicio' : 'hoje', {busca:''}); break;
+    case 'nav': ir(v, {busca:'', filtro: v === 'alunos' ? state.filtro : 'todos'}); break;
+    case 'abrir': ir('aluno', {alunoId:id, tab:'dados', ficha:'A', busca:''}); break;
+    case 'tab': state.tab = v; render(); break;
+    case 'filtro': state.filtro = v; render(); break;
+    case 'cobrar': sheetCobrar(a); break;
+    case 'whats': window.open(waLink(a, `Oi ${primeiroNome(a.nome)}, tudo bem?`), '_blank', 'noopener'); break;
+    case 'copiar-msg': copiar(document.getElementById('msg-cobranca').value, 'Mensagem copiada'); break;
+    case 'pago': sheetPago(a); break;
+    case 'confirmar-pago': {
+      const p = plano(a.plano); const forma = document.getElementById('forma-pag').value;
+      a.pags.push({data:new Date(HOJE), valor:p.valor, forma}); a.forma = forma;
+      a.venc = addMeses(a.venc, p.meses, a.diaBase);
+      fecharSheet(); render(); toast(`Pago! Próximo vencimento ${fmt(a.venc)}`); break;
+    }
+    case 'ficha': state.ficha = v; render(); break;
+    case 'nova-ficha': { const al = aluno(state.alunoId); const k = String.fromCharCode(65 + Object.keys(al.fichas).length); al.fichas[k] = {titulo:'Nova ficha', ex:[]}; state.ficha = k; render(); break; }
+    case 'add-ex': sheetAddEx(); break;
+    case 'pick-ex': aluno(state.alunoId).fichas[state.ficha].ex.push(ex(v,3,12,10)); fecharSheet(); render(); toast(`${v} adicionado`); break;
+    case 'rm-ex': aluno(state.alunoId).fichas[state.ficha].ex.splice(i,1); render(); break;
+    case 'copiar-ficha': sheetCopiarFicha(); break;
+    case 'copiar-de': { const origem = a.fichas[state.ficha]; if (origem){ aluno(state.alunoId).fichas[state.ficha] = clone(origem); } fecharSheet(); render(); toast(`Ficha ${state.ficha} copiada de ${primeiroNome(a.nome)}`); break; }
+    case 'nova-aval': sheetNovaAval(); break;
+    case 'tpl': document.getElementById('aviso-txt').value = v; break;
+    case 'enviar-aviso': {
+      const t = document.getElementById('aviso-txt').value.trim(); if (!t){ toast('Escreva o aviso primeiro'); break; }
+      state.avisos.push({data:new Date(HOJE), texto:t}); state.pushPendente = t;
+      render(); toast(`Notificação enviada para ${state.alunos.length - 3} alunos com o app`); break;
+    }
+    case 'copiar-aviso': { const t = document.getElementById('aviso-txt').value.trim(); if (!t){ toast('Escreva o aviso primeiro'); break; } copiar(`📢 *${state.academia.nome}*\n\n${t}`, 'Copiado. Cole na lista de transmissão'); break; }
+    case 'ficha-aluno': state.fichaAluno = v; render(); break;
+    case 'check': { const k = state.fichaAluno; const arr = state.feitos[k] = state.feitos[k] || []; const p = arr.indexOf(i); p >= 0 ? arr.splice(p,1) : arr.push(i); render(); break; }
+    case 'concluir': { const k = state.fichaAluno; state.treinosMes++; state.feitos[k] = []; const ks = Object.keys(aluno(LUCAS_ID).fichas); state.fichaAluno = ks[(ks.indexOf(k)+1) % ks.length]; render(); toast(`Treino concluído! ${state.treinosMes}º treino do mês 💪`); break; }
+    case 'copiar-pix': copiar(pixCopiaECola(plano(aluno(LUCAS_ID).plano).valor), 'Código Pix copiado'); break;
+  }
+});
+
+document.addEventListener('input', e => {
+  if (e.target.id === 'msg-cobranca'){
+    document.getElementById('wa-envio').href = waLink(aluno(+e.target.dataset.id), e.target.value);
+  }
+  if (e.target.id === 'busca-ex'){
+    const q = norm(e.target.value.trim());
+    document.querySelectorAll('.grupo-ex').forEach(g => {
+      let algum = false;
+      g.querySelectorAll('[data-busca]').forEach(b => { const ok = !q || b.dataset.busca.includes(q); b.hidden = !ok; algum ||= ok; });
+      g.hidden = !algum;
+    });
+  }
+  if (e.target.id === 'busca'){
+    state.busca = e.target.value;
+    if (state.view === 'inicio') document.getElementById('busca-res').innerHTML = resultadosBusca();
+    else { const pos = e.target.selectionStart; render(); const b = document.getElementById('busca'); b.focus(); b.setSelectionRange(pos,pos); }
+  }
+});
+
+document.addEventListener('change', e => {
+  const t = e.target, k = t.dataset.input; if (!k) return;
+  if (k === 'campo'){ const f = t.dataset.f; aluno(state.alunoId).fichas[state.ficha].ex[+t.dataset.i][f] = ['series','carga','desc'].includes(f) ? +t.value : t.value; }
+  if (k === 'titulo') aluno(state.alunoId).fichas[state.ficha].titulo = t.value;
+  if (k === 'carga-aluno'){ aluno(LUCAS_ID).fichas[state.fichaAluno].ex[+t.dataset.i].carga = +t.value; toast('Carga atualizada. O professor também vê'); }
+});
+
+document.addEventListener('submit', e => {
+  e.preventDefault();
+  const f = new FormData(e.target);
+  if (e.target.id === 'form-aluno'){
+    const [y,m,d] = f.get('inicio').split('-').map(Number); const inicio = new Date(y, m-1, d);
+    const p = plano(f.get('plano'));
+    const a = { id: Math.max(...state.alunos.map(x => x.id)) + 1, nome: f.get('nome').trim(), whats: f.get('whats'), cpf: f.get('cpf') || '—', nasc: f.get('nasc') || '—', obj: f.get('obj'), restr: f.get('restr') || '—', plano: p.id, forma: f.get('forma'), inicio, diaBase: d, venc: addMeses(inicio, p.meses, d), fichas: clone(FICHAS_MODELO), avals: [], pags: [{data:inicio, valor:p.valor, forma:f.get('forma')}] };
+    state.alunos.push(a); ir('aluno', {alunoId:a.id, tab:'treino', ficha:'A'}); toast('Aluno cadastrado. Monte o treino');
+  }
+  if (e.target.id === 'form-plano'){
+    state.planos.push({id:'p'+Date.now(), nome:f.get('nome').trim(), valor:+f.get('valor'), meses:+f.get('meses')}); render(); toast('Plano adicionado');
+  }
+  if (e.target.id === 'form-ex'){
+    const nome = f.get('nome').trim();
+    if (!BIBLIOTECA.some(b => norm(b.nome) === norm(nome))) BIBLIOTECA.push({nome, grupo:f.get('grupo')});
+    aluno(state.alunoId).fichas[state.ficha].ex.push(ex(nome, +f.get('series') || 3, f.get('reps') || '12', +f.get('carga') || 0, +f.get('desc') || 60));
+    fecharSheet(); render(); toast(`${nome} criado e adicionado`);
+  }
+  if (e.target.id === 'form-aval'){
+    aluno(state.alunoId).avals.push({data:new Date(HOJE), peso:+f.get('peso'), gordura:+f.get('gordura'), cintura:+f.get('cintura'), braco:+f.get('braco')});
+    fecharSheet(); render(); toast('Avaliação salva. O aluno já vê a evolução');
+  }
+});
+
+render();
+</script>
+</body>
+</html>
